@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package hello;
+
+option go_package = "multi-process-docker/proto";
+
+service Greeter {
+  rpc SayHello (HelloRequest) returns (HelloReply) {}
+  rpc StreamMessages (StreamRequest) returns (stream MessageResponse) {}
+}
+
+message HelloRequest {
+  string name = 1;
+}
+
+message HelloReply {
+  string message = 1;
+  int32 count = 2;
+}
+
+message StreamRequest {
+  int32 count = 1;
+}
+
+message MessageResponse {
+  string message = 1;
+  int32 index = 2;
+}
