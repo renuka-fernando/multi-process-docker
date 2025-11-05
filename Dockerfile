@@ -57,5 +57,7 @@ RUN chmod +x /app/server && \
     chmod +x /etc/s6-overlay/s6-rc.d/grpc-server/run && \
     chmod +x /etc/s6-overlay/s6-rc.d/grpc-client/run
 
+USER 10000
+
 # s6-overlay requires /init as the entrypoint
 ENTRYPOINT ["/init"]
