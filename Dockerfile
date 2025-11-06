@@ -1,12 +1,6 @@
 # Stage 1: Build the Go binaries
+# NOTE: Run 'make proto' to generate protobuf files before building
 FROM golang:alpine AS builder
-
-# Install required tools
-RUN apk add --no-cache git protobuf-dev
-
-# Install protoc-gen-go and protoc-gen-go-grpc
-RUN go install google.golang.org/protobuf/cmd/protoc-gen-go@latest && \
-    go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
 
 WORKDIR /build
 
@@ -16,11 +10,6 @@ RUN go mod download
 
 # Copy source code
 COPY . .
-
-# Generate protobuf code
-RUN protoc --go_out=. --go_opt=paths=source_relative \
-    --go-grpc_out=. --go-grpc_opt=paths=source_relative \
-    proto/service.proto
 
 # Build server
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o ./server-bin ./server

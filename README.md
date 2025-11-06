@@ -44,10 +44,23 @@ This project demonstrates running two Go processes (gRPC server and client) in a
 
 - Docker
 - Make (optional, for convenience commands)
+- Protocol Buffers compiler (`protoc`) with Go plugins
+  - `protoc-gen-go`
+  - `protoc-gen-go-grpc`
 
 ## Quick Start
 
-### 1. Build the Docker image
+### 1. Generate protobuf code
+
+First, generate the protobuf files locally:
+
+```bash
+make proto
+```
+
+> **Note**: You need `protoc`, `protoc-gen-go`, and `protoc-gen-go-grpc` installed. See the [Development](#development) section for installation instructions.
+
+### 2. Build the Docker image
 
 ```bash
 make build
@@ -58,7 +71,7 @@ Or without Make:
 docker build -t grpc-multiprocess .
 ```
 
-### 2. Run the container
+### 3. Run the container
 
 ```bash
 make run
@@ -69,7 +82,7 @@ Or without Make:
 docker run -d --name grpc-container grpc-multiprocess
 ```
 
-### 3. View logs
+### 4. View logs
 
 ```bash
 make logs
@@ -84,6 +97,7 @@ docker logs -f grpc-container
 
 ```bash
 make help              # Show all available commands
+make proto             # Generate protobuf code locally
 make build             # Build the Docker image
 make run               # Run container in detached mode
 make run-interactive   # Run container in foreground
@@ -150,18 +164,34 @@ Both processes are defined as s6 services:
 
 ## Development
 
-### Local Proto Generation
+### Proto Generation
 
-If you want to generate protobuf code locally:
+The project requires protobuf code to be generated **before** building the Docker image. This allows compilation both inside and outside Docker.
+
+**Installation:**
 
 ```bash
-# Install protoc and plugins
+# Install protoc (choose your platform)
+# macOS
+brew install protobuf
+
+# Linux (Debian/Ubuntu)
+apt-get install -y protobuf-compiler
+
+# Or download from: https://github.com/protocolbuffers/protobuf/releases
+
+# Install Go plugins
 go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
 go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
+```
 
-# Generate code
+**Generate code:**
+
+```bash
 make proto
 ```
+
+This runs `generate.sh` which creates the `.pb.go` files in the `proto/` directory. These files are git-ignored but required for building.
 
 ### Inspecting Running Container
 
@@ -206,6 +236,7 @@ s6-overlay provides the best balance of features and footprint for this use case
 - View server logs: `make logs-server`
 
 ### Build fails
+- Run `make proto` first to generate protobuf files
 - Ensure Docker is running
 - Check Go version compatibility in Dockerfile
 - Verify all source files are present

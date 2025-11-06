@@ -221,11 +221,48 @@ func (pm *ProcessManager) Wait() {
 type prefixedWriter struct {
 	prefix string
 	dest   *os.File
+	buffer []byte
 }
 
 func (pw *prefixedWriter) Write(p []byte) (n int, err error) {
-	prefixed := append([]byte(pw.prefix), p...)
-	return pw.dest.Write(prefixed)
+	// We need to return len(p) to the caller, not the length of what we actually wrote
+	// Otherwise the caller thinks there was an error
+	originalLen := len(p)
+
+	// Append incoming data to buffer
+	pw.buffer = append(pw.buffer, p...)
+
+	// Process complete lines
+	for {
+		lineEnd := -1
+		for i, b := range pw.buffer {
+			if b == '\n' {
+				lineEnd = i
+				break
+			}
+		}
+
+		if lineEnd == -1 {
+			// No complete line yet, keep buffering
+			break
+		}
+
+		// Write the line with prefix
+		line := pw.buffer[:lineEnd+1]
+		prefixed := append([]byte(pw.prefix), line...)
+
+		if _, err := pw.dest.Write(prefixed); err != nil {
+			// Even if we fail to write, we should return the original length
+			// to avoid breaking the pipe on the caller's side
+			return originalLen, nil
+		}
+
+		// Remove the processed line from buffer
+		pw.buffer = pw.buffer[lineEnd+1:]
+	}
+
+	// Return the original length to satisfy the caller
+	return originalLen, nil
 }
 
 func main() {

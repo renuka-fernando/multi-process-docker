@@ -14,9 +14,6 @@
 # Go workspace file
 go.work
 
-# Generated protobuf files
-proto/*.pb.go
-
 # IDE
 .vscode/
 .idea/
